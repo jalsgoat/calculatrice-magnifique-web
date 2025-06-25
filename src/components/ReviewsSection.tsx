@@ -56,6 +56,24 @@ const reviews: Review[] = [
 ];
 
 const ReviewsSection = () => {
+  // Créer un tableau infini en dupliquant les avis
+  const createInfiniteReviews = () => {
+    // Ajouter les 3 derniers avis au début et les 3 premiers à la fin
+    const lastThreeReviews = reviews.slice(-3).map(review => ({
+      ...review,
+      id: review.id + 1000 // ID unique pour éviter les conflits
+    }));
+    
+    const firstThreeReviews = reviews.slice(0, 3).map(review => ({
+      ...review,
+      id: review.id + 2000 // ID unique pour éviter les conflits
+    }));
+    
+    return [...lastThreeReviews, ...reviews, ...firstThreeReviews];
+  };
+
+  const infiniteReviews = createInfiniteReviews();
+
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
@@ -86,13 +104,14 @@ const ReviewsSection = () => {
               align: "start",
               loop: true,
               slidesToScroll: 1,
-              containScroll: "trimSnaps",
+              containScroll: false,
+              startIndex: 3, // Commencer par les vrais avis (après les 3 dupliqués)
             }}
             className="w-full"
           >
             <CarouselContent className="ml-0">
-              {reviews.map((review) => (
-                <CarouselItem key={review.id} className="md:basis-1/3 basis-full pl-4">
+              {infiniteReviews.map((review, index) => (
+                <CarouselItem key={`${review.id}-${index}`} className="md:basis-1/3 basis-full pl-4">
                   <div className="bg-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[320px] flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex space-x-1">
