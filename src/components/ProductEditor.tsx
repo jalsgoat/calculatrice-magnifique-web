@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Product } from '@/contexts/ProductsContext';
 import { Trash2, Plus, Minus, Eye } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import ImageUploader from '@/components/ImageUploader';
 
 interface ProductEditorProps {
   product: Product;
@@ -149,22 +150,26 @@ const ProductEditor = ({ product, onUpdate, onDelete }: ProductEditorProps) => {
               Ajouter une image
             </Button>
           </div>
-          <div className="space-y-2">
+          <div className="space-y-4">
             {images.map((image, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <Input
+              <div key={index} className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">Image {index + 1}</span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => removeImage(index)}
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <ImageUploader
+                  label=""
                   value={image}
-                  onChange={(e) => handleImageChange(index, e.target.value)}
-                  placeholder="URL de l'image"
+                  onChange={(value) => handleImageChange(index, value)}
+                  placeholder="URL de l'image ou uploader depuis votre PC"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => removeImage(index)}
-                >
-                  <Minus className="w-4 h-4" />
-                </Button>
               </div>
             ))}
             {images.length === 0 && (

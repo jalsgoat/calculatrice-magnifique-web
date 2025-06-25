@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useProducts } from '@/contexts/ProductsContext';
-import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 const ProductsSection = () => {
@@ -23,7 +22,11 @@ const ProductsSection = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
           {categories.map((category) => (
-            <div key={category.id} className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+            <div 
+              key={category.id} 
+              className="bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300 cursor-pointer transform hover:scale-105"
+              onClick={() => navigate(`/categorie/${category.id}`)}
+            >
               <div className="h-64 overflow-hidden">
                 <img
                   src={category.image}
@@ -39,39 +42,30 @@ const ProductsSection = () => {
                   {category.description}
                 </p>
                 
-                {/* Produits individuels */}
-                {category.products.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="font-semibold text-gray-900 mb-3">Produits disponibles :</h4>
-                    <div className="space-y-2">
-                      {category.products.map((product) => (
-                        <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                          <div>
-                            <h5 className="font-medium text-gray-900">{product.name}</h5>
-                            <p className="text-sm text-gray-600">{product.description}</p>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => navigate(`/produit/${product.id}`)}
-                            className="bg-butchery-red hover:bg-red-800 text-white"
-                          >
-                            Voir détails
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
+                {/* Aperçu des produits */}
+                <div className="mb-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Aperçu des produits :</h4>
+                  <ul className="space-y-2">
+                    {category.products.slice(0, 3).map((product, productIndex) => (
+                      <li key={productIndex} className="flex items-start">
+                        <span className="w-2 h-2 bg-butchery-gold rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                        <span className="text-gray-700 text-sm">{product.name}</span>
+                      </li>
+                    ))}
+                    {category.products.length > 3 && (
+                      <li className="text-butchery-red text-sm font-medium">
+                        Et {category.products.length - 3} autres produits...
+                      </li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="text-center">
+                  <div className="inline-flex items-center text-butchery-red font-semibold">
+                    Cliquez pour voir tous les produits
+                    <span className="ml-2">→</span>
                   </div>
-                )}
-                
-                {/* Liste des articles généraux */}
-                <ul className="space-y-2">
-                  {category.items.map((item, itemIndex) => (
-                    <li key={itemIndex} className="flex items-start">
-                      <span className="w-2 h-2 bg-butchery-gold rounded-full mt-2 mr-3 flex-shrink-0"></span>
-                      <span className="text-gray-700">{item}</span>
-                    </li>
-                  ))}
-                </ul>
+                </div>
               </div>
             </div>
           ))}

@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 export interface Product {
@@ -11,7 +10,6 @@ export interface Product {
   origin: string;
   weight: string;
   pricePerKg: string;
-  categoryId: string;
 }
 
 export interface ProductCategory {
@@ -19,19 +17,50 @@ export interface ProductCategory {
   title: string;
   description: string;
   image: string;
-  items: string[];
   products: Product[];
+}
+
+export interface SiteData {
+  heroSection: {
+    title: string;
+    subtitle: string;
+    backgroundImage: string;
+  };
+  categories: ProductCategory[];
+  services: Array<{
+    title: string;
+    description: string;
+  }>;
+  contact: {
+    address: string;
+    phone: string;
+    email: string;
+    hours: {
+      weekdays: string;
+      saturday: string;
+      sunday: string;
+    };
+  };
 }
 
 interface ProductsContextType {
   categories: ProductCategory[];
-  updateCategory: (id: string, category: Partial<ProductCategory>) => void;
+  siteData: SiteData | null;
+  loading: boolean;
+  hasUnsavedChanges: boolean;
+  updateCategory: (id: string, updates: Partial<ProductCategory>) => void;
   addCategory: (category: Omit<ProductCategory, 'id'>) => void;
   deleteCategory: (id: string) => void;
-  addProduct: (categoryId: string, product: Omit<Product, 'id' | 'categoryId'>) => void;
-  updateProduct: (productId: string, product: Partial<Product>) => void;
+  addProduct: (categoryId: string, product: Omit<Product, 'id'>) => void;
+  updateProduct: (productId: string, updates: Partial<Product>) => void;
   deleteProduct: (productId: string) => void;
   getProductById: (productId: string) => Product | undefined;
+  updateHeroSection: (updates: Partial<SiteData['heroSection']>) => void;
+  updateContact: (updates: Partial<SiteData['contact']>) => void;
+  exportData: () => SiteData;
+  importData: (data: SiteData) => void;
+  saveAllChanges: () => void;
+  resetUnsavedChanges: () => void;
 }
 
 const ProductsContext = createContext<ProductsContextType | undefined>(undefined);
@@ -44,139 +73,223 @@ export const useProducts = () => {
   return context;
 };
 
-const defaultCategories: ProductCategory[] = [
-  {
-    id: '1',
-    title: "Viandes Rouges",
-    description: "Bœuf et agneau de première qualité, sélectionnés avec soin auprès de nos fournisseurs certifiés halal.",
-    image: "https://images.unsplash.com/photo-1493962853295-0fd70327578a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    items: ["Bœuf : steaks, rôtis, viande hachée", "Agneau : côtelettes, gigot, épaule", "Préparations spéciales sur demande"],
-    products: [
-      {
-        id: 'beef-1',
-        name: 'Côte de Bœuf Premium',
-        description: 'Côte de bœuf de qualité exceptionnelle',
-        detailedDescription: 'Notre côte de bœuf premium provient d\'élevages certifiés halal. Maturation de 21 jours pour une tendreté optimale. Parfaite pour vos repas de fête.',
-        images: ['https://images.unsplash.com/photo-1493962853295-0fd70327578a?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80'],
-        type: 'Viande rouge',
-        origin: 'France',
-        weight: '1.5-2kg',
-        pricePerKg: '35€/kg',
-        categoryId: '1'
-      }
-    ]
-  },
-  {
-    id: '2',
-    title: "Volailles",
-    description: "Poulets et dindes élevés dans le respect des traditions, pour une viande tendre et savoureuse.",
-    image: "https://images.unsplash.com/photo-1465379944081-7f47de8d74ac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    items: ["Poulets fermiers entiers et découpés", "Dindes pour vos occasions spéciales", "Abats frais disponibles"],
-    products: []
-  },
-  {
-    id: '3',
-    title: "Plats Préparés",
-    description: "Délicieux plats traditionnels préparés avec amour dans notre cuisine, prêts à réchauffer.",
-    image: "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    items: ["Tajines et couscous maison", "Grillades marinées", "Spécialités du Ramadan"],
-    products: []
-  },
-  {
-    id: '4',
-    title: "Épicerie Orientale",
-    description: "Une sélection d'épices, condiments et produits orientaux pour accompagner vos plats.",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80",
-    items: ["Épices et mélanges traditionnels", "Conserves et produits d'importation", "Thés et pâtisseries orientales"],
-    products: []
-  }
-];
-
-const STORAGE_KEY = 'boucherie-products';
-
 export const ProductsProvider = ({ children }: { children: ReactNode }) => {
-  const [categories, setCategories] = useState<ProductCategory[]>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      return saved ? JSON.parse(saved) : defaultCategories;
-    } catch {
-      return defaultCategories;
-    }
-  });
+  const [siteData, setSiteData] = useState<SiteData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Sauvegarder dans localStorage à chaque changement
+  // Chargement initial des données
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(categories));
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde:', error);
-    }
-  }, [categories]);
+    const loadData = async () => {
+      try {
+        // Charger d'abord depuis localStorage (données modifiées)
+        const savedData = localStorage.getItem('siteData');
+        if (savedData) {
+          console.log('Chargement depuis localStorage...');
+          setSiteData(JSON.parse(savedData));
+          setLoading(false);
+          return;
+        }
 
-  const updateCategory = (id: string, updatedCategory: Partial<ProductCategory>) => {
-    setCategories(prev => 
-      prev.map(cat => cat.id === id ? { ...cat, ...updatedCategory } : cat)
-    );
+        // Si pas de données locales, charger depuis le fichier JSON public
+        const response = await fetch('/data.json');
+        if (response.ok) {
+          const data = await response.json();
+          setSiteData(data);
+          // Sauvegarder dans localStorage pour la prochaine fois
+          localStorage.setItem('siteData', JSON.stringify(data));
+        } else {
+          throw new Error('Fichier data.json non trouvé');
+        }
+      } catch (error) {
+        console.log('Erreur lors du chargement, utilisation des données par défaut');
+        // Données par défaut si rien n'est trouvé
+        const defaultData: SiteData = {
+          heroSection: {
+            title: "Boucherie Artisanale",
+            subtitle: "Viandes fraîches et de qualité",
+            backgroundImage: "/lovable-uploads/6e143375-4021-47b2-971f-6a9b56b26d8f.png"
+          },
+          categories: [],
+          services: [],
+          contact: {
+            address: "36 Avenue Georges Pompidou, 31270 Cugnaux, France",
+            phone: "05 61 86 54 42",
+            email: "contact@boucherie-hidaya.fr",
+            hours: {
+              weekdays: "8h30-13h / 15h-19h30",
+              saturday: "8h30-13h / 15h-19h30",
+              sunday: "8h30-13h"
+            }
+          }
+        };
+        setSiteData(defaultData);
+        localStorage.setItem('siteData', JSON.stringify(defaultData));
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  const saveData = (data: SiteData, markAsUnsaved = true) => {
+    setSiteData(data);
+    // Sauvegarder automatiquement dans localStorage à chaque modification
+    localStorage.setItem('siteData', JSON.stringify(data));
+    if (markAsUnsaved) {
+      setHasUnsavedChanges(true);
+    }
   };
 
-  const addCategory = (newCategory: Omit<ProductCategory, 'id'>) => {
-    const id = Date.now().toString();
-    setCategories(prev => [...prev, { ...newCategory, id, products: [] }]);
+  const saveAllChanges = () => {
+    // Cette fonction ne fait plus rien car les données sont déjà sauvegardées automatiquement
+    setHasUnsavedChanges(false);
+  };
+
+  const resetUnsavedChanges = () => {
+    setHasUnsavedChanges(false);
+  };
+
+  const updateCategory = (id: string, updates: Partial<ProductCategory>) => {
+    if (!siteData) return;
+    
+    const updatedCategories = siteData.categories.map(cat =>
+      cat.id === id ? { ...cat, ...updates } : cat
+    );
+    
+    const newData = { ...siteData, categories: updatedCategories };
+    saveData(newData);
+  };
+
+  const addCategory = (category: Omit<ProductCategory, 'id'>) => {
+    if (!siteData) return;
+    
+    const newCategory: ProductCategory = {
+      ...category,
+      id: `category-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    const newData = {
+      ...siteData,
+      categories: [...siteData.categories, newCategory]
+    };
+    saveData(newData);
   };
 
   const deleteCategory = (id: string) => {
-    setCategories(prev => prev.filter(cat => cat.id !== id));
+    if (!siteData) return;
+    
+    const newData = {
+      ...siteData,
+      categories: siteData.categories.filter(cat => cat.id !== id)
+    };
+    saveData(newData);
   };
 
-  const addProduct = (categoryId: string, newProduct: Omit<Product, 'id' | 'categoryId'>) => {
-    const id = Date.now().toString();
-    setCategories(prev => 
-      prev.map(cat => 
-        cat.id === categoryId 
-          ? { ...cat, products: [...cat.products, { ...newProduct, id, categoryId }] }
-          : cat
+  const addProduct = (categoryId: string, product: Omit<Product, 'id'>) => {
+    if (!siteData) return;
+    
+    const newProduct: Product = {
+      ...product,
+      id: `product-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    const updatedCategories = siteData.categories.map(cat =>
+      cat.id === categoryId
+        ? { ...cat, products: [...cat.products, newProduct] }
+        : cat
+    );
+    
+    const newData = { ...siteData, categories: updatedCategories };
+    saveData(newData);
+  };
+
+  const updateProduct = (productId: string, updates: Partial<Product>) => {
+    if (!siteData) return;
+    
+    const updatedCategories = siteData.categories.map(cat => ({
+      ...cat,
+      products: cat.products.map(product =>
+        product.id === productId ? { ...product, ...updates } : product
       )
-    );
-  };
-
-  const updateProduct = (productId: string, updatedProduct: Partial<Product>) => {
-    setCategories(prev => 
-      prev.map(cat => ({
-        ...cat,
-        products: cat.products.map(product => 
-          product.id === productId ? { ...product, ...updatedProduct } : product
-        )
-      }))
-    );
+    }));
+    
+    const newData = { ...siteData, categories: updatedCategories };
+    saveData(newData);
   };
 
   const deleteProduct = (productId: string) => {
-    setCategories(prev => 
-      prev.map(cat => ({
-        ...cat,
-        products: cat.products.filter(product => product.id !== productId)
-      }))
-    );
+    if (!siteData) return;
+    
+    const updatedCategories = siteData.categories.map(cat => ({
+      ...cat,
+      products: cat.products.filter(product => product.id !== productId)
+    }));
+    
+    const newData = { ...siteData, categories: updatedCategories };
+    saveData(newData);
+  };
+
+  const updateHeroSection = (updates: Partial<SiteData['heroSection']>) => {
+    if (!siteData) return;
+    
+    const newData = {
+      ...siteData,
+      heroSection: { ...siteData.heroSection, ...updates }
+    };
+    saveData(newData);
+  };
+
+  const updateContact = (updates: Partial<SiteData['contact']>) => {
+    if (!siteData) return;
+    
+    const newData = {
+      ...siteData,
+      contact: { ...siteData.contact, ...updates }
+    };
+    saveData(newData);
+  };
+
+  const exportData = (): SiteData => {
+    if (!siteData) throw new Error('Aucune donnée à exporter');
+    return siteData;
+  };
+
+  const importData = (data: SiteData) => {
+    saveData(data, false);
   };
 
   const getProductById = (productId: string): Product | undefined => {
-    for (const category of categories) {
+    if (!siteData) return undefined;
+    
+    for (const category of siteData.categories) {
       const product = category.products.find(p => p.id === productId);
       if (product) return product;
     }
+    
     return undefined;
   };
 
   return (
     <ProductsContext.Provider value={{
-      categories,
+      categories: siteData?.categories || [],
+      siteData,
+      loading,
+      hasUnsavedChanges,
       updateCategory,
       addCategory,
       deleteCategory,
       addProduct,
       updateProduct,
       deleteProduct,
-      getProductById
+      getProductById,
+      updateHeroSection,
+      updateContact,
+      exportData,
+      importData,
+      saveAllChanges,
+      resetUnsavedChanges
     }}>
       {children}
     </ProductsContext.Provider>

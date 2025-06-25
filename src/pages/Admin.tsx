@@ -4,25 +4,51 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Upload, Save, ArrowLeft, Plus } from 'lucide-react';
+import { ArrowLeft, Plus, Phone, Clock, Image } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useProducts, ProductCategory } from '@/contexts/ProductsContext';
 import ProductCategoryEditor from '@/components/ProductCategoryEditor';
 import ProductEditor from '@/components/ProductEditor';
-import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ImageUploader from '@/components/ImageUploader';
+import DataManager from '@/components/DataManager';
+import GlobalSaveButton from '@/components/GlobalSaveButton';
 
 const Admin = () => {
   const navigate = useNavigate();
-  const { categories, updateCategory, addCategory, deleteCategory, addProduct, updateProduct, deleteProduct } = useProducts();
-  const { toast } = useToast();
-  const [heroImage, setHeroImage] = useState('');
+  const { categories, siteData, updateCategory, addCategory, deleteCategory, addProduct, updateProduct, deleteProduct, updateHeroSection, updateContact } = useProducts();
+
+  // États locaux pour les formulaires
+  const [heroData, setHeroData] = useState({
+    backgroundImage: siteData?.heroSection.backgroundImage || ''
+  });
+
+  const [contactData, setContactData] = useState({
+    phone: siteData?.contact.phone || '',
+    address: siteData?.contact.address || '',
+    email: siteData?.contact.email || '',
+    hours: {
+      weekdays: siteData?.contact.hours.weekdays || '',
+      saturday: siteData?.contact.hours.saturday || '',
+      sunday: siteData?.contact.hours.sunday || ''
+    }
+  });
+
+  // Vérification de sécurité pour éviter l'erreur de map
+  if (!categories) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   const [newCategory, setNewCategory] = useState({
     title: '',
     description: '',
-    image: '',
-    items: ['']
+    image: ''
   });
 
   const [newProduct, setNewProduct] = useState({
@@ -37,12 +63,25 @@ const Admin = () => {
     categoryId: ''
   });
 
-  const handleSave = () => {
-    console.log('Image de bannière sauvegardée:', heroImage);
-    toast({
-      title: "Succès",
-      description: "Les modifications ont été sauvegardées avec succès!",
-    });
+  const handleHeroImageChange = (value: string) => {
+    setHeroData(prev => ({ ...prev, backgroundImage: value }));
+    updateHeroSection({ backgroundImage: value });
+  };
+
+  const handleContactChange = (field: string, value: string) => {
+    if (field.startsWith('hours.')) {
+      const hourField = field.split('.')[1];
+      setContactData(prev => ({
+        ...prev,
+        hours: { ...prev.hours, [hourField]: value }
+      }));
+      updateContact({
+        hours: { ...contactData.hours, [hourField]: value }
+      });
+    } else {
+      setContactData(prev => ({ ...prev, [field]: value }));
+      updateContact({ [field]: value });
+    }
   };
 
   const handleAddNewCategory = () => {
@@ -51,17 +90,12 @@ const Admin = () => {
         title: newCategory.title,
         description: newCategory.description,
         image: newCategory.image,
-        items: newCategory.items.filter(item => item.trim() !== '')
+        products: []
       });
       setNewCategory({
         title: '',
         description: '',
-        image: '',
-        items: ['']
-      });
-      toast({
-        title: "Succès",
-        description: "Nouvelle catégorie ajoutée avec succès!",
+        image: ''
       });
     }
   };
@@ -89,28 +123,7 @@ const Admin = () => {
         pricePerKg: '',
         categoryId: ''
       });
-      toast({
-        title: "Succès",
-        description: "Nouveau produit ajouté avec succès!",
-      });
     }
-  };
-
-  const handleNewCategoryItemChange = (index: number, value: string) => {
-    const newItems = [...newCategory.items];
-    newItems[index] = value;
-    setNewCategory(prev => ({ ...prev, items: newItems }));
-  };
-
-  const addNewCategoryItem = () => {
-    setNewCategory(prev => ({ ...prev, items: [...prev.items, ''] }));
-  };
-
-  const removeNewCategoryItem = (index: number) => {
-    setNewCategory(prev => ({
-      ...prev,
-      items: prev.items.filter((_, i) => i !== index)
-    }));
   };
 
   const handleNewProductImageChange = (index: number, value: string) => {
@@ -147,19 +160,138 @@ const Admin = () => {
           </h1>
         </div>
 
+        {/* Section Export/Import */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Données</h2>
+          <DataManager />
+        </div>
+
+        {/* Section gestion de l'image de fond uniquement */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Image de Fond de la Bannière</h2>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Image className="w-5 h-5" />
+                Image de fond
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <ImageUploader
+                label="Image de fond"
+                value={heroData.backgroundImage}
+                onChange={handleHeroImageChange}
+                placeholder="URL de l'image de fond ou uploader depuis votre PC"
+              />
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Section gestion des informations de contact */}
+        <div className="mb-12">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Informations de Contact</h2>
+          <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Phone className="w-5 h-5" />
+                  Contact
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="contact-phone">Numéro de téléphone</Label>
+                  <Input
+                    id="contact-phone"
+                    value={contactData.phone}
+                    onChange={(e) => handleContactChange('phone', e.target.value)}
+                    placeholder="05 61 86 54 42"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="contact-address">Adresse</Label>
+                  <Textarea
+                    id="contact-address"
+                    value={contactData.address}
+                    onChange={(e) => handleContactChange('address', e.target.value)}
+                    placeholder="Adresse complète"
+                    rows={2}
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="contact-email">Email</Label>
+                  <Input
+                    id="contact-email"
+                    type="email"
+                    value={contactData.email}
+                    onChange={(e) => handleContactChange('email', e.target.value)}
+                    placeholder="contact@boucherie-hidaya.fr"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock className="w-5 h-5" />
+                  Horaires d'ouverture
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="hours-weekdays">Lundi à Vendredi</Label>
+                  <Input
+                    id="hours-weekdays"
+                    value={contactData.hours.weekdays}
+                    onChange={(e) => handleContactChange('hours.weekdays', e.target.value)}
+                    placeholder="8h30-13h / 15h-19h30"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="hours-saturday">Samedi</Label>
+                  <Input
+                    id="hours-saturday"
+                    value={contactData.hours.saturday}
+                    onChange={(e) => handleContactChange('hours.saturday', e.target.value)}
+                    placeholder="8h30-13h / 15h-19h30"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="hours-sunday">Dimanche</Label>
+                  <Input
+                    id="hours-sunday"
+                    value={contactData.hours.sunday}
+                    onChange={(e) => handleContactChange('hours.sunday', e.target.value)}
+                    placeholder="8h30-13h"
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
         {/* Section gestion des catégories */}
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Catégories</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Catégories (Nos Produits)</h2>
           
-          {/* Catégories existantes */}
-          {categories.map((category) => (
-            <ProductCategoryEditor
-              key={category.id}
-              category={category}
-              onUpdate={updateCategory}
-              onDelete={deleteCategory}
-            />
-          ))}
+          {/* Catégories existantes avec vérification de sécurité */}
+          {categories && categories.length > 0 ? (
+            categories.map((category) => (
+              <ProductCategoryEditor
+                key={category.id}
+                category={category}
+                onUpdate={updateCategory}
+                onDelete={deleteCategory}
+              />
+            ))
+          ) : (
+            <p className="text-gray-600 mb-6">Aucune catégorie trouvée.</p>
+          )}
 
           {/* Ajouter nouvelle catégorie */}
           <Card>
@@ -191,50 +323,12 @@ const Admin = () => {
                 />
               </div>
 
-              <div>
-                <Label htmlFor="new-image">URL de l'image</Label>
-                <Input
-                  id="new-image"
-                  value={newCategory.image}
-                  onChange={(e) => setNewCategory(prev => ({ ...prev, image: e.target.value }))}
-                  placeholder="https://example.com/image.jpg"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Articles disponibles</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addNewCategoryItem}
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  {newCategory.items.map((item, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
-                        value={item}
-                        onChange={(e) => handleNewCategoryItemChange(index, e.target.value)}
-                        placeholder="Description de l'article"
-                      />
-                      {newCategory.items.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeNewCategoryItem(index)}
-                        >
-                          ×
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ImageUploader
+                label="Image de la catégorie"
+                value={newCategory.image}
+                onChange={(value) => setNewCategory(prev => ({ ...prev, image: value }))}
+                placeholder="URL de l'image ou uploader depuis votre PC"
+              />
 
               <Button
                 onClick={handleAddNewCategory}
@@ -247,19 +341,25 @@ const Admin = () => {
         </div>
 
         {/* Section gestion des produits individuels */}
-        <div className="mb-12">
+        <div className="mb-32">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Gestion des Produits Individuels</h2>
           
-          {/* Produits existants */}
-          {categories.map((category) => 
-            category.products.map((product) => (
-              <ProductEditor
-                key={product.id}
-                product={product}
-                onUpdate={updateProduct}
-                onDelete={deleteProduct}
-              />
-            ))
+          {/* Produits existants avec vérification de sécurité */}
+          {categories && categories.length > 0 ? (
+            categories.map((category) => 
+              category.products && category.products.length > 0 ? (
+                category.products.map((product) => (
+                  <ProductEditor
+                    key={product.id}
+                    product={product}
+                    onUpdate={updateProduct}
+                    onDelete={deleteProduct}
+                  />
+                ))
+              ) : null
+            )
+          ) : (
+            <p className="text-gray-600 mb-6">Aucun produit trouvé.</p>
           )}
 
           {/* Ajouter nouveau produit */}
@@ -275,14 +375,16 @@ const Admin = () => {
                 <Label htmlFor="product-category">Catégorie</Label>
                 <Select value={newProduct.categoryId} onValueChange={(value) => setNewProduct(prev => ({ ...prev, categoryId: value }))}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner une catégorie" />
+                    <SelectValue placeholder={categories && categories.length > 0 ? "Sélectionner une catégorie" : "Aucune catégorie disponible"} />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.title}
-                      </SelectItem>
-                    ))}
+                    {categories && categories.length > 0 ? (
+                      categories.map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.title}
+                        </SelectItem>
+                      ))
+                    ) : null}
                   </SelectContent>
                 </Select>
               </div>
@@ -372,24 +474,28 @@ const Admin = () => {
                     <Plus className="w-4 h-4" />
                   </Button>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-4">
                   {newProduct.images.map((image, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <Input
+                    <div key={index} className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">Image {index + 1}</span>
+                        {newProduct.images.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => removeNewProductImage(index)}
+                          >
+                            ×
+                          </Button>
+                        )}
+                      </div>
+                      <ImageUploader
+                        label=""
                         value={image}
-                        onChange={(e) => handleNewProductImageChange(index, e.target.value)}
-                        placeholder="URL de l'image"
+                        onChange={(value) => handleNewProductImageChange(index, value)}
+                        placeholder="URL de l'image ou uploader depuis votre PC"
                       />
-                      {newProduct.images.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeNewProductImage(index)}
-                        >
-                          ×
-                        </Button>
-                      )}
                     </div>
                   ))}
                 </div>
@@ -404,47 +510,9 @@ const Admin = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Section gestion de la photo de bannière */}
-        <div className="grid gap-6">
-          <h2 className="text-2xl font-bold text-gray-900">Gestion de la photo de bannière</h2>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5" />
-                Photo de bannière (Accueil)
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <Label htmlFor="hero-image">URL de l'image</Label>
-                <Input
-                  id="hero-image"
-                  placeholder="https://example.com/image.jpg"
-                  value={heroImage}
-                  onChange={(e) => setHeroImage(e.target.value)}
-                />
-                {heroImage && (
-                  <img
-                    src={heroImage}
-                    alt="Aperçu bannière"
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Button
-            onClick={handleSave}
-            className="w-full bg-butchery-red hover:bg-red-800 text-white flex items-center gap-2"
-          >
-            <Save className="w-4 h-4" />
-            Sauvegarder les modifications
-          </Button>
-        </div>
       </div>
+
+      <GlobalSaveButton />
     </div>
   );
 };

@@ -1,8 +1,11 @@
 
 import React from 'react';
 import { ArrowDown } from 'lucide-react';
+import { useProducts } from '@/contexts/ProductsContext';
 
 const HeroSection = () => {
+  const { siteData } = useProducts();
+
   const scrollToProducts = () => {
     const element = document.getElementById('produits');
     if (element) {
@@ -10,12 +13,15 @@ const HeroSection = () => {
     }
   };
 
+  const heroSection = siteData?.heroSection;
+  const contact = siteData?.contact;
+
   return (
     <section id="accueil" className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image */}
       <div className="absolute inset-0 z-0">
         <img
-          src="https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"
+          src={heroSection?.backgroundImage || "https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80"}
           alt="Vitrine de boucherie avec viandes fraîches"
           className="w-full h-full object-cover"
         />
@@ -44,7 +50,7 @@ const HeroSection = () => {
             </button>
             
             <a
-              href="tel:+33561865442"
+              href={`tel:${contact?.phone?.replace(/\s/g, '') || '+33561865442'}`}
               className="w-full sm:w-auto border-2 border-white text-white hover:bg-white hover:text-butchery-red px-6 sm:px-8 py-3 sm:py-4 rounded-full font-semibold text-base sm:text-lg transition-all duration-300 transform hover:scale-105"
             >
               Nous contacter

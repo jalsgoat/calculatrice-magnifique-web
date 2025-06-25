@@ -1,0 +1,116 @@
+
+{
+  "heroSection": {
+    "title": "Boucherie Artisanale",
+    "subtitle": "Viandes fraîches et de qualité",
+    "backgroundImage": "/lovable-uploads/6e143375-4021-47b2-971f-6a9b56b26d8f.png"
+  },
+  "categories": [
+    {
+      "id": "viandes-boeuf",
+      "title": "Viandes de Bœuf",
+      "description": "Découvrez notre sélection de viandes de bœuf premium, issues d'élevages locaux et maturées avec soin.",
+      "image": "https://images.unsplash.com/photo-1588168333986-5078d3ae3976?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
+      "items": [
+        "Steaks et côtes",
+        "Rôtis et braisés",
+        "Viande hachée fraîche",
+        "Abats de qualité"
+      ],
+      "products": [
+        {
+          "id": "filet-boeuf",
+          "name": "Filet de Bœuf",
+          "description": "Pièce noble et tendre, parfaite pour les grandes occasions",
+          "detailedDescription": "Notre filet de bœuf provient de bovins élevés dans nos prairies locales. Cette pièce exceptionnelle est maturée pendant 21 jours pour développer toute sa saveur et sa tendreté. Idéal pour un repas de fête ou pour impressionner vos invités.",
+          "images": [
+            "https://images.unsplash.com/photo-1546833999-b9f581a1996d?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+          ],
+          "type": "Pièce noble",
+          "origin": "Élevage local",
+          "weight": "1.2-1.5kg",
+          "pricePerKg": "45€/kg"
+        }
+      ]
+    },
+    {
+      "id": "viandes-porc",
+      "title": "Viandes de Porc",
+      "description": "Cochons élevés dans le respect du bien-être animal, pour une viande savoureuse et authentique.",
+      "image": "https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
+      "items": [
+        "Côtelettes et filets",
+        "Jambons artisanaux",
+        "Saucisses maison",
+        "Terrines et pâtés"
+      ],
+      "products": [
+        {
+          "id": "cote-porc",
+          "name": "Côte de Porc",
+          "description": "Côte de porc juteux et savoureux, idéal pour les grillades",
+          "detailedDescription": "Nos côtes de porc proviennent de porcs élevés en plein air dans nos fermes partenaires. La viande est persillée naturellement, garantissant une cuisson parfaite et un goût authentique. Parfait pour vos barbecues d'été.",
+          "images": [
+            "https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+          ],
+          "type": "Côte",
+          "origin": "Élevage plein air",
+          "weight": "200-250g/pièce",
+          "pricePerKg": "18€/kg"
+        }
+      ]
+    },
+    {
+      "id": "volailles",
+      "title": "Volailles",
+      "description": "Poulets, canards et autres volailles élevées au grain, pour une chair ferme et goûteuse.",
+      "image": "https://images.unsplash.com/photo-1604503468506-a8da13d82791?ixlib=rb-1.2.1&auto=format&fit=crop&w=1200&q=80",
+      "items": [
+        "Poulets fermiers",
+        "Canards gras",
+        "Pintades et chapons",
+        "Œufs frais"
+      ],
+      "products": [
+        {
+          "id": "poulet-fermier",
+          "name": "Poulet Fermier",
+          "description": "Poulet élevé au grain, chair ferme et savoureuse",
+          "detailedDescription": "Notre poulet fermier est élevé pendant minimum 81 jours en liberté dans nos cours de ferme. Nourri aux céréales locales, il développe une chair ferme et un goût incomparable. Parfait pour tous vos plats traditionnels.",
+          "images": [
+            "https://images.unsplash.com/photo-1604503468506-a8da13d82791?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
+          ],
+          "type": "Volaille fermière",
+          "origin": "Élevage local",
+          "weight": "1.8-2.2kg",
+          "pricePerKg": "12€/kg"
+        }
+      ]
+    }
+  ],
+  "services": [
+    {
+      "title": "Découpe sur mesure",
+      "description": "Nous découpons vos viandes selon vos besoins spécifiques"
+    },
+    {
+      "title": "Préparations maison",
+      "description": "Marinades, farces et préparations artisanales"
+    },
+    {
+      "title": "Conseils culinaires",
+      "description": "Nos bouchers vous conseillent pour réussir vos plats"
+    }
+  ],
+  "contact": {
+    "address": "123 Rue de la Boucherie, 75001 Paris",
+    "phone": "01 23 45 67 89",
+    "email": "contact@boucherie-artisanale.fr",
+    "hours": {
+      "weekdays": "8h00 - 19h30",
+      "saturday": "8h00 - 19h00",
+      "sunday": "Fermé"
+    }
+  }
+}
