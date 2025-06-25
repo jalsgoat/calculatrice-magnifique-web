@@ -92,7 +92,7 @@ const ReviewsSection = () => {
           >
             <CarouselContent className="ml-0">
               {reviews.map((review) => (
-                <CarouselItem key={review.id} className="basis-1/3 pl-4">
+                <CarouselItem key={review.id} className="md:basis-1/3 basis-full pl-4">
                   <div className="bg-gray-50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 min-h-[320px] flex flex-col">
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex space-x-1">
