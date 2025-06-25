@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect, useCallback } from 'react';
 import {
   Carousel,
   CarouselContent,
@@ -8,6 +8,7 @@ import {
   CarouselPrevious,
 } from "@/components/ui/carousel";
 import { Star } from 'lucide-react';
+import { type CarouselApi } from "@/components/ui/carousel";
 
 interface Review {
   id: number;
@@ -56,23 +57,75 @@ const reviews: Review[] = [
 ];
 
 const ReviewsSection = () => {
-  // Créer un tableau infini en dupliquant les avis
+  const [api, setApi] = React.useState<CarouselApi>();
+
+  // Créer un tableau infini en dupliquant les avis plusieurs fois
   const createInfiniteReviews = () => {
-    // Ajouter les 3 derniers avis au début et les 3 premiers à la fin
-    const lastThreeReviews = reviews.slice(-3).map(review => ({
-      ...review,
-      id: review.id + 1000 // ID unique pour éviter les conflits
-    }));
+    // Dupliquer les avis 3 fois pour assurer l'infinite scroll dans les deux directions
+    const duplicatedReviews = [];
     
-    const firstThreeReviews = reviews.slice(0, 3).map(review => ({
-      ...review,
-      id: review.id + 2000 // ID unique pour éviter les conflits
-    }));
+    // Ajouter plusieurs copies avant
+    for (let i = 0; i < 3; i++) {
+      duplicatedReviews.push(...reviews.map((review, index) => ({
+        ...review,
+        id: review.id + (i * 1000) + 3000 // ID unique pour éviter les conflits
+      })));
+    }
     
-    return [...lastThreeReviews, ...reviews, ...firstThreeReviews];
+    // Ajouter les avis originaux
+    duplicatedReviews.push(...reviews);
+    
+    // Ajouter plusieurs copies après
+    for (let i = 0; i < 3; i++) {
+      duplicatedReviews.push(...reviews.map((review, index) => ({
+        ...review,
+        id: review.id + (i * 1000) + 6000 // ID unique pour éviter les conflits
+      })));
+    }
+    
+    return duplicatedReviews;
   };
 
   const infiniteReviews = createInfiniteReviews();
+  const originalReviewsCount = reviews.length;
+  const startIndex = originalReviewsCount * 3; // Commencer au milieu (après 3 copies)
+
+  // Gérer l'infinite scroll
+  const handleInfiniteScroll = useCallback(() => {
+    if (!api) return;
+
+    const scrollProgress = api.scrollProgress();
+    const selectedIndex = api.selectedScrollSnap();
+    const slideCount = api.slideNodes().length;
+
+    // Si on est proche du début, sauter vers la fin des vrais avis
+    if (selectedIndex <= originalReviewsCount) {
+      const newIndex = startIndex + (selectedIndex % originalReviewsCount);
+      api.scrollTo(newIndex, false); // false = pas d'animation
+    }
+    
+    // Si on est proche de la fin, sauter vers le début des vrais avis  
+    if (selectedIndex >= slideCount - originalReviewsCount - 1) {
+      const newIndex = startIndex + (selectedIndex % originalReviewsCount);
+      api.scrollTo(newIndex, false); // false = pas d'animation
+    }
+  }, [api, originalReviewsCount, startIndex]);
+
+  useEffect(() => {
+    if (!api) return;
+
+    // Aller au slide de départ
+    api.scrollTo(startIndex, false);
+
+    // Écouter les changements de slide
+    api.on('select', handleInfiniteScroll);
+    api.on('settle', handleInfiniteScroll);
+
+    return () => {
+      api.off('select', handleInfiniteScroll);
+      api.off('settle', handleInfiniteScroll);
+    };
+  }, [api, handleInfiniteScroll, startIndex]);
 
   const renderStars = (rating: number) => {
     return Array.from({ length: 5 }, (_, index) => (
@@ -100,12 +153,13 @@ const ReviewsSection = () => {
 
         <div className="max-w-6xl mx-auto px-12">
           <Carousel
+            setApi={setApi}
             opts={{
               align: "start",
-              loop: true,
+              loop: false, // Désactiver le loop natif car on gère manuellement
               slidesToScroll: 1,
               containScroll: false,
-              startIndex: 3, // Commencer par les vrais avis (après les 3 dupliqués)
+              dragFree: false,
             }}
             className="w-full"
           >
