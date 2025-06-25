@@ -84,9 +84,9 @@ const ReviewsSection = () => {
           <Carousel
             opts={{
               align: "start",
-              loop: true,
-              slidesToScroll: 1,
-              containScroll: false,
+              loop: false,
+              slidesToScroll: 3,
+              containScroll: "trimSnaps",
             }}
             className="w-full"
           >
